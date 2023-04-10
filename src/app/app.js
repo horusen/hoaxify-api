@@ -1,9 +1,10 @@
 const express = require("express");
+const { registerUser } = require("./auth/registration/registration.controller");
 
 const app = express();
 
-app.post("/api/1.0/users", (req, res) => {
-	return res.status(200).send({ message: "User created succesfully" });
-});
+app.use(express.json());
+
+app.post("/api/v1/users", registerUser);
 
 module.exports = app;
