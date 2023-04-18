@@ -1,3 +1,4 @@
+const HttpError = require("../utils/httpError");
 const User = require("./user.model");
 
 const bcrypt = require("bcrypt");
@@ -6,7 +7,17 @@ const PASSWORD_SALT_ROUNDS = 10;
 
 const create = async (userData) => {
 	const hashedPassword = await _hashPassword(userData.password);
-	let user = await User.create({ ...userData, password: hashedPassword });
+	let user;
+	try {
+		user = await User.create({
+			...userData,
+			password: hashedPassword,
+		});
+	} catch (error) {
+		if (error.name == "SequelizeUniqueConstraintError") {
+			throw new HttpError("Validation failed", 422, { email: "Email is already in use" });
+		}
+	}
 	return user;
 };
 
@@ -15,8 +26,7 @@ async function _hashPassword(password) {
 }
 
 const getUserByEmail = async (email) => {
-	const user = await User.findOne({ where: { email } });
-	return user;
+	return await User.findOne({ where: { email } });
 };
 
 module.exports = {

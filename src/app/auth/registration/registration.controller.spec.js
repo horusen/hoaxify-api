@@ -2,8 +2,9 @@ const request = require("supertest");
 const app = require("../../app");
 const User = require("../../user/user.model");
 const sequelize = require("../../../loader/database");
+const { log } = require("console");
 
-const user = { username: "Omar", email: "omar@email.com", password: "Password" };
+const user = { username: "Omar", email: "omar@email.com", password: "P4ssword@" };
 
 beforeAll(async () => {
 	await sequelize.sync();
@@ -24,9 +25,6 @@ describe("Registration controller", () => {
 
 	it("Should return 201 when the signup request is valid", async () => {
 		expect(result.statusCode).toBe(201);
-	});
-
-	it("Should have a sucess message when the signup request is valid", async () => {
 		expect(result.body.message).toBe("User created succesfully");
 	});
 
@@ -35,49 +33,58 @@ describe("Registration controller", () => {
 		expect(users.length).toBe(1);
 	});
 
-	it("Should return 400 if any params is missing", async () => {
-		const users = [
-			{ ...user, username: undefined },
-			{ ...user, email: undefined },
-			{ ...user, password: undefined },
-		];
-
-		for (let i = 0; i < users.length; i++) {
-			const result = await apiCall(users[i]);
-			expect(result.statusCode).toBe(400);
-			expect(result.body.message).toBe("Please provide all the required fields");
-		}
+	it.each`
+		field         | value           | message
+		${"username"} | ${undefined}    | ${"Username is required"}
+		${"email"}    | ${undefined}    | ${"Email is required"}
+		${"password"} | ${undefined}    | ${"Password is required"}
+		${"email"}    | ${"email"}      | ${"Please enter a valid email address"}
+		${"email"}    | ${"email.com"}  | ${"Please enter a valid email address"}
+		${"email"}    | ${"email@.com"} | ${"Please enter a valid email address"}
+		${"email"}    | ${"@email.com"} | ${"Please enter a valid email address"}
+		${"password"} | ${"passw"}      | ${"Please enter a password with 6 or more characters"}
+		${"password"} | ${"password"}   | ${"Password must contain at least one uppercase, one lowercase, one number and one special character"}
+		${"password"} | ${"PASSWORD"}   | ${"Password must contain at least one uppercase, one lowercase, one number and one special character"}
+		${"password"} | ${"Password1"}  | ${"Password must contain at least one uppercase, one lowercase, one number and one special character"}
+	`("Should return a validation failed when $field is $value", async ({ field, value, message }) => {
+		const userp = { ...user, [field]: value };
+		const result = await apiCall(userp);
+		expect(result.body.message).toBe("Validation failed");
+		expect(result.statusCode).toBe(422);
+		log(result.body.errors);
+		expect(result.body.errors[field]).toBe(message);
 	});
 
-	it("Should return a validationErrors array if any params is missing", async () => {
-		const users = [
-			{ ...user, username: undefined },
-			{ ...user, email: undefined },
-			{ ...user, password: undefined },
-		];
-
-		for (let i = 0; i < users.length; i++) {
-			const result = await apiCall(users[i]);
-			expect(result.statusCode).toBe(400);
-			expect(result.body.validationErrors).toBeDefined();
-		}
+	it("Should return an error message with a 422 status code if the email is already been used", async () => {
+		await apiCall();
+		const result = await apiCall();
+		expect(result.statusCode).toBe(422);
+		expect(result.body.message).toBe("Validation failed");
+		expect(result.body.errors.email).toBe("Email is already in use");
 	});
 
-	// it("Should return validation error if the email is invalid", async () => {
-	// 	const result = await apiCall({ ...user, email: "omar" });
-	// 	expect(result.statusCode).toBe(400);
-	// 	expect(result.body.message).toBe("Please provide a valid email");
+	// it.each([
+	// 	["username", "Username is required"],
+	// 	["email", "Please include a valid email"],
+	// 	["password", "Please enter a password with 6 or more characters"],
+	// ])("Should return a validation failed when %s is missing", async (field, message) => {
+	// 	const userp = { ...user, [field]: undefined };
+	// 	const result = await apiCall(userp);
+	// 	expect(result.body.message).toBe("Validation failed");
+	// 	expect(result.statusCode).toBe(422);
+	// 	expect(result.body.errors).toContainEqual({ field, message });
 	// });
 
-	// it("Should return validation error if the password is invalid", async () => {
-	// 	const result = await apiCall({ ...user, password: "" });
-	// 	expect(result.statusCode).toBe(400);
-	// 	expect(result.body.message).toBe("Please provide a valid password");
+	// it("Should return a validation failed when the email is not well formed", async () => {
+	// 	const emails = ["email@email", "email.com", "email@.com", "email@.com."];
+	// 	for (let email in emails) {
+	// 		expect((await apiCall({ ...user, email })).body.errors).toContainEqual({ field: "email", message: "Please include a valid email" });
+	// 	}
 	// });
 
-	// it("Should return validation error if the username is invalid", async () => {
-	// 	const result = await apiCall({ ...user, username: "" });
-	// 	expect(result.statusCode).toBe(400);
-	// 	expect(result.body.message).toBe("Please provide a valid username");
+	// it("Should return a validation failed when the password is less than 6 characters", async () => {
+	// 	const userp = { ...user, password: "passw" };
+	// 	const result = await apiCall(userp);
+	// 	expect(result.body.errors).toContainEqual({ field: "password", message: "Please enter a password with 6 or more characters" });
 	// });
 });

@@ -1,10 +1,13 @@
 const express = require("express");
-const { registerUser } = require("./auth/registration/registration.controller");
+const routes = require("./../routes");
+const errorHandler = require("./utils/errorHandler");
 
 const app = express();
 
 app.use(express.json());
 
-app.post("/api/v1/users", registerUser);
+app.use("/api/v1", routes);
+
+app.use(errorHandler);
 
 module.exports = app;
