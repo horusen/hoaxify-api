@@ -1,0 +1,18 @@
+{
+	"erroMessage": {
+		"error": "Erreur de validation",
+		"email": {
+			"required": "Email est requis",
+			"invalid": "Veuillez saisir une adresse email valide",
+			"inUse": "Email est déjà utilisé"
+		},
+		"username": {
+			"required": "Nom d'utilisateur est requis"
+		},
+		"password": {
+			"required": "Mot de passe est requis",
+			"length": "Veuillez saisir un mot de passe avec 6 caractères ou plus",
+			"invalid": "Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial"
+		}
+	}
+}

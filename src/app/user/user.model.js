@@ -17,6 +17,13 @@ module.exports = sequelize.define(
 			type: Sequelize.STRING,
 			allowNull: false,
 		},
+		active: {
+			type: Sequelize.BOOLEAN,
+			defaultValue: false,
+		},
+		activationToken: {
+			type: Sequelize.STRING,
+		},
 	},
 	{
 		sequelize,
