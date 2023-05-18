@@ -16,7 +16,7 @@ const generateToken = (length) => {
 const create = async (userData) => {
 	const { username, email, password } = userData;
 	const hashedPassword = await _hashPassword(password);
-	const transaction = await User.sequelize.transaction();
+	const transaction = await User.sequelize?.transaction();
 
 	let user = await User.create(
 		{
@@ -50,7 +50,7 @@ const getUserByEmail = async (email) => {
 	return await User.findOne({ where: { email } });
 };
 
-const getAll = async () => {
+const findAll = async () => {
 	return await User.findAll();
 };
 
@@ -69,5 +69,5 @@ module.exports = {
 	create,
 	getUserByEmail,
 	activate,
-	getAll,
+	findAll,
 };

@@ -7,7 +7,7 @@ const emailService = require("../../utils/email-service");
 const smtpServer = require("smtp-server").SMTPServer;
 
 const user = { username: "Omar", email: "omar@email.com", password: "P4ssword@" };
-const URL = "/api/v1/users";
+const URL = "/api/v1/auth/registration";
 let lastMail, server;
 
 beforeAll(async () => {
@@ -135,7 +135,7 @@ describe("Registration controller", () => {
 	});
 
 	describe("Should activate the user account", () => {
-		const PREFIX_ACCOUNT_ACTIVATION_URL = "/api/v1/users/activation";
+		const PREFIX_ACCOUNT_ACTIVATION_URL = "/api/v1/auth/activation";
 		let users;
 		beforeEach(async () => {
 			if (!expect.getState().currentTestName.includes("<<skip-beforeEach-activation-token>>")) {

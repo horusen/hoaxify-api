@@ -6,7 +6,7 @@ const use = require("../../utils/errorWrapper");
 
 const router = require("express").Router();
 
-router.post("/", registrationDto(), use(registerUser));
+router.post("/registration", registrationDto(), use(registerUser));
 router.get("/activation/:token", use(activateUser));
 
 async function registerUser(req, res) {
