@@ -56,5 +56,8 @@
 			],
 			"semi": "error"
 		}
+	},
+	"jest": {
+		"verbose": true
 	}
 }
