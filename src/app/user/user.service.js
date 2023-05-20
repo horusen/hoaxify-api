@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 
 const emailService = require("../utils/email-service");
+const paginate = require("../utils/paginate");
 
 const PASSWORD_SALT_ROUNDS = 10;
 const PER_PAGE = 10;
@@ -57,13 +58,12 @@ const findAll = async (perPage = null, page = null) => {
 	perPage = perPage || PER_PAGE;
 	page = page || PAGE;
 
-	console.log((page - 1) * perPage);
-
 	const { count, rows } = await User.findAndCountAll({
 		attributes: { exclude: ["password", "activationToken", "active"] },
 		where: { active: true },
-		limit: perPage,
-		offset: (page - 1) * perPage,
+		...paginate({ page, pageSize: perPage }),
+		// limit: perPage,
+		// offset: (page - 1) * perPage,
 	});
 
 	const totalPages = Math.ceil(count / perPage);

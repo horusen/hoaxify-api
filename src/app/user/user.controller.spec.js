@@ -54,6 +54,7 @@ describe("User controller", () => {
 		it("Should not return a password, activation token and active properties", async () => {
 			await createUsers(1, 0);
 			response = await apiCall();
+			console.log(response.body);
 			expect(response.body.data[0].password).toBeUndefined();
 			expect(response.body.data[0].activationToken).toBeUndefined();
 			expect(response.body.data[0].active).toBeUndefined();
