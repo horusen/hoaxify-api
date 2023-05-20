@@ -8,6 +8,8 @@ const crypto = require("crypto");
 const emailService = require("../utils/email-service");
 
 const PASSWORD_SALT_ROUNDS = 10;
+const PER_PAGE = 10;
+const PAGE = 1;
 
 const generateToken = (length) => {
 	return crypto.randomBytes(length).toString("hex").substring(0, length);
@@ -24,6 +26,7 @@ const create = async (userData) => {
 			email,
 			activationToken: generateToken(16),
 			password: hashedPassword,
+			active: userData.active || false,
 		},
 		{ transaction }
 	).catch((error) => {
@@ -50,8 +53,22 @@ const getUserByEmail = async (email) => {
 	return await User.findOne({ where: { email } });
 };
 
-const findAll = async () => {
-	return await User.findAll();
+const findAll = async (perPage = null, page = null) => {
+	perPage = perPage || PER_PAGE;
+	page = page || PAGE;
+
+	console.log((page - 1) * perPage);
+
+	const { count, rows } = await User.findAndCountAll({
+		attributes: { exclude: ["password", "activationToken", "active"] },
+		where: { active: true },
+		limit: perPage,
+		offset: (page - 1) * perPage,
+	});
+
+	const totalPages = Math.ceil(count / perPage);
+
+	return { data: rows, count, totalPages };
 };
 
 const activate = async (activationToken) => {

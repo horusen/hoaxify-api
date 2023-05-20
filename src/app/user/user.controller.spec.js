@@ -4,7 +4,6 @@ const config = require("config");
 const app = require("../app");
 const User = require("./user.model");
 const sequelize = require("../../loader/database");
-const { before, after } = require("node:test");
 
 const API_ENDPOINT = `/api/v1/users`;
 const apiCall = () => request(app).get(API_ENDPOINT);
@@ -14,42 +13,70 @@ describe("User controller", () => {
 		await sequelize.sync();
 	});
 
-	// beforeEach(async () => {
-	// 	// await User.destroy({ truncate: true, force: true });
-	// });
+	beforeEach(async () => {
+		await User.destroy({ truncate: true, force: true });
+	});
 
 	describe("GET /users", () => {
 		let response;
-		beforeAll(async () => {
-			const users = [
-				{ username: "Omar", email: "omar@email.com", password: "P4ssword@" },
-				{ username: "Jerome", email: "jerome@email.com", password: "P4ssword@" },
-				{ username: "Salif", email: "salif@email.com", password: "P4ssword@" },
-			];
 
-			await User.bulkCreate(users);
-		});
+		const createUsers = async (active, inactive) => {
+			for (let i = 0; i < active + inactive; i++) {
+				await User.create({
+					username: `user${i + 1}`,
+					email: `user${i + 1}@email.com`,
+					password: "password",
+					active: i < active,
+				});
+			}
+		};
+
+		beforeAll(async () => {});
 
 		afterAll(async () => {
 			await User.destroy({ truncate: true, force: true });
 		});
 
-		beforeEach(async () => {
-			response = await apiCall();
-		});
+		beforeEach(async () => {});
 
 		it("Should return a 200 status code", async () => {
+			await createUsers(1, 0);
+			response = await apiCall();
 			expect(response.status).toBe(200);
 		});
 
 		it("Should return a message User fetched succesfully", async () => {
+			await createUsers(1, 0);
+			response = await apiCall();
 			expect(response.body.message).toBe("Users fetched succesfully");
 		});
 
-		it("Should return all users", async () => {
-			console.log(response.body.data);
-			const data = response.body.data;
-			expect(data.length).toBe(3);
+		it("Should not return a password, activation token and active properties", async () => {
+			await createUsers(1, 0);
+			response = await apiCall();
+			expect(response.body.data[0].password).toBeUndefined();
+			expect(response.body.data[0].activationToken).toBeUndefined();
+			expect(response.body.data[0].active).toBeUndefined();
+		});
+
+		it("Should only return active users", async () => {
+			await createUsers(1, 1);
+			response = await apiCall();
+			expect(response.body.data.length).toBe(1);
+		});
+
+		it("Should return 10 users per page", async () => {
+			await createUsers(12, 0);
+			response = await apiCall();
+			expect(response.body.data.length).toBe(10);
+			expect(response.body.totalPages).toBe(2);
+		});
+
+		it("Should return the second page when the page query param is 2", async () => {
+			await createUsers(12, 0);
+			response = await apiCall().query({ page: 2 });
+			expect(response.body.data.length).toBe(2);
+			expect(response.body.totalPages).toBe(2);
 		});
 	});
 });
