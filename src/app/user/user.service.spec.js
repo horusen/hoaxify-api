@@ -3,6 +3,8 @@ const User = require("./user.model");
 const emailService = require("../utils/email-service");
 const bcrypt = require("bcrypt");
 const HttpError = require("../utils/httpError");
+const { before } = require("node:test");
+const exp = require("constants");
 
 let mockUsers = [];
 let mockPerPage = 10;
@@ -93,6 +95,14 @@ describe("User service", () => {
 			expect(emailService.sendActivationEmail).toHaveBeenCalledWith(expect.objectContaining(result));
 		});
 
+		it("Should throw an error if the email service fails with 502 status code and 'Error sending activation email' message", async () => {
+			await userService.create({ ...user, username: "userWithFailedEmail" }).catch((error) => {
+				expect(error).toBeDefined();
+				expect(error.message).toBe("Error sending activation email");
+				expect(error.status).toBe(502);
+			});
+		});
+
 		it("Should return the user after creation", () => {
 			expect(result.username).toBe(user.username);
 			expect(result.email).toBe(user.email);
@@ -118,6 +128,16 @@ describe("User service", () => {
 	});
 
 	describe("Get all users", () => {
+		let exceptedParams = {
+			attributes: { exclude: ["password", "activationToken", "active"] },
+			where: { active: true },
+		};
+		beforeEach(() => {
+			mockUsers = [];
+			mockPerPage = 10;
+			mockPage = 1;
+		});
+
 		createUsers = async (active, inactive = 0) => {
 			for (let i = 0; i < active + inactive; i++) {
 				await User.create({
@@ -132,6 +152,7 @@ describe("User service", () => {
 		it("Should return only active users", async () => {
 			await createUsers(1, 1);
 			const result = await userService.findAll();
+			expect(User.findAndCountAll).toHaveBeenCalledWith(expect.objectContaining({ where: { active: true } }));
 			expect(result.data.length).toBe(1);
 			expect(result.data[0]).toMatchObject({ ...mockUsers[0], password: undefined, active: undefined });
 		});
@@ -139,6 +160,9 @@ describe("User service", () => {
 		it("Should not display the password, activation token, an active properties", async () => {
 			await createUsers(1, 0);
 			const result = await userService.findAll();
+			expect(User.findAndCountAll).toHaveBeenCalledWith(
+				expect.objectContaining({ attributes: { exclude: ["password", "activationToken", "active"] } })
+			);
 			expect(result.data[0].password).toBeUndefined();
 			expect(result.data[0].active).toBeUndefined();
 			expect(result.data[0].activationToken).toBeUndefined();
@@ -147,15 +171,48 @@ describe("User service", () => {
 		it("Should return 10 users by default", async () => {
 			await createUsers(12);
 			const result = await userService.findAll();
+			expect(User.findAndCountAll).toHaveBeenCalledWith(expect.objectContaining({ offset: 0, limit: 10 }));
 			expect(result.data.length).toBe(10);
 		});
 
 		it("Should return only 2 users on the second page if there are 12 active users users", async () => {
-			mockUsers = [];
 			await createUsers(12);
 			mockPage = 2;
 			const result = await userService.findAll(10, 2);
+			expect(User.findAndCountAll).toHaveBeenCalledWith(expect.objectContaining({ offset: 10, limit: 10 }));
 			expect(result.data.length).toBe(2);
+		});
+
+		it("Should return 5 users if the user request for five user per page", async () => {
+			await createUsers(12);
+			mockPerPage = 5;
+			const result = await userService.findAll(5, 1);
+			expect(User.findAndCountAll).toHaveBeenCalledWith(expect.objectContaining({ offset: 0, limit: 5 }));
+			expect(result.data.length).toBe(5);
+		});
+
+		it("Should return 10 users if the user request for 20 users per page", async () => {
+			await createUsers(12);
+			mockPerPage = 10;
+			const result = await userService.findAll(20, 1);
+			expect(User.findAndCountAll).toHaveBeenCalledWith(expect.objectContaining({ offset: 0, limit: 10 }));
+			expect(result.data.length).toBe(10);
+		});
+
+		it("Should return 10 users if the specify a Nan per page", async () => {
+			await createUsers(12);
+			mockPerPage = 10;
+			const result = await userService.findAll("Nan", 1);
+			expect(User.findAndCountAll).toHaveBeenCalledWith(expect.objectContaining({ offset: 0, limit: 10 }));
+			expect(result.data.length).toBe(10);
+		});
+
+		it("Should return 10 users if the specify a -1 per page", async () => {
+			await createUsers(12);
+			mockPerPage = 10;
+			const result = await userService.findAll("Nan", 1);
+			expect(User.findAndCountAll).toHaveBeenCalledWith(expect.objectContaining({ offset: 0, limit: 10 }));
+			expect(result.data.length).toBe(10);
 		});
 	});
 });

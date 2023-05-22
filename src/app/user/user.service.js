@@ -55,15 +55,13 @@ const getUserByEmail = async (email) => {
 };
 
 const findAll = async (perPage = null, page = null) => {
-	perPage = perPage || PER_PAGE;
-	page = page || PAGE;
+	perPage = parseInt(perPage) || PER_PAGE;
+	page = parseInt(page) || PAGE;
 
 	const { count, rows } = await User.findAndCountAll({
 		attributes: { exclude: ["password", "activationToken", "active"] },
 		where: { active: true },
 		...paginate({ page, pageSize: perPage }),
-		// limit: perPage,
-		// offset: (page - 1) * perPage,
 	});
 
 	const totalPages = Math.ceil(count / perPage);

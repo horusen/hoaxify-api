@@ -79,5 +79,30 @@ describe("User controller", () => {
 			expect(response.body.data.length).toBe(2);
 			expect(response.body.totalPages).toBe(2);
 		});
+
+		it("Should return 5 users per page when the perPage query param is 5", async () => {
+			await createUsers(12, 0);
+			response = await apiCall().query({ perPage: 5 });
+			expect(response.body.data.length).toBe(5);
+			expect(response.body.totalPages).toBe(3);
+		});
+
+		it("Should return 10 users per page when the perPage query param is 20", async () => {
+			await createUsers(12, 0);
+			response = await apiCall().query({ perPage: 20 });
+			expect(response.body.data.length).toBe(10);
+		});
+
+		it("Should return 10 users per page when the perPage query param is -1", async () => {
+			await createUsers(12, 0);
+			response = await apiCall().query({ perPage: -1 });
+			expect(response.body.data.length).toBe(10);
+		});
+
+		it("Should return 10 users per page when the perPage query param is Nan", async () => {
+			await createUsers(12, 0);
+			response = await apiCall().query({ perPage: "any" });
+			expect(response.body.data.length).toBe(10);
+		});
 	});
 });
