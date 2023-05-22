@@ -80,28 +80,28 @@ describe("User controller", () => {
 			expect(response.body.totalPages).toBe(2);
 		});
 
-		it("Should return 5 users per page when the perPage query param is 5", async () => {
+		it("Should return 5 users per page when the pageSize query param is 5", async () => {
 			await createUsers(12, 0);
-			response = await apiCall().query({ perPage: 5 });
+			response = await apiCall().query({ pageSize: 5 });
 			expect(response.body.data.length).toBe(5);
 			expect(response.body.totalPages).toBe(3);
 		});
 
-		it("Should return 10 users per page when the perPage query param is 20", async () => {
+		it("Should return 10 users per page when the pageSize query param is 20", async () => {
 			await createUsers(12, 0);
-			response = await apiCall().query({ perPage: 20 });
+			response = await apiCall().query({ pageSize: 20 });
 			expect(response.body.data.length).toBe(10);
 		});
 
-		it("Should return 10 users per page when the perPage query param is -1", async () => {
+		it("Should return 10 users per page when the pageSize query param is -1", async () => {
 			await createUsers(12, 0);
-			response = await apiCall().query({ perPage: -1 });
+			response = await apiCall().query({ pageSize: -1 });
 			expect(response.body.data.length).toBe(10);
 		});
 
-		it("Should return 10 users per page when the perPage query param is Nan", async () => {
+		it("Should return 10 users per page when the pageSize query param is Nan", async () => {
 			await createUsers(12, 0);
-			response = await apiCall().query({ perPage: "any" });
+			response = await apiCall().query({ pageSize: "any" });
 			expect(response.body.data.length).toBe(10);
 		});
 	});

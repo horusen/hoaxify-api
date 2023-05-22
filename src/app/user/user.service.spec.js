@@ -190,29 +190,5 @@ describe("User service", () => {
 			expect(User.findAndCountAll).toHaveBeenCalledWith(expect.objectContaining({ offset: 0, limit: 5 }));
 			expect(result.data.length).toBe(5);
 		});
-
-		it("Should return 10 users if the user request for 20 users per page", async () => {
-			await createUsers(12);
-			mockPerPage = 10;
-			const result = await userService.findAll(20, 1);
-			expect(User.findAndCountAll).toHaveBeenCalledWith(expect.objectContaining({ offset: 0, limit: 10 }));
-			expect(result.data.length).toBe(10);
-		});
-
-		it("Should return 10 users if the specify a Nan per page", async () => {
-			await createUsers(12);
-			mockPerPage = 10;
-			const result = await userService.findAll("Nan", 1);
-			expect(User.findAndCountAll).toHaveBeenCalledWith(expect.objectContaining({ offset: 0, limit: 10 }));
-			expect(result.data.length).toBe(10);
-		});
-
-		it("Should return 10 users if the specify a -1 per page", async () => {
-			await createUsers(12);
-			mockPerPage = 10;
-			const result = await userService.findAll("Nan", 1);
-			expect(User.findAndCountAll).toHaveBeenCalledWith(expect.objectContaining({ offset: 0, limit: 10 }));
-			expect(result.data.length).toBe(10);
-		});
 	});
 });
