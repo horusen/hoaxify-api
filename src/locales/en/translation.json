@@ -1,0 +1,18 @@
+{
+	"errorMessage": {
+		"error": "Validation failed",
+		"email": {
+			"required": "Email is required",
+			"invalid": "Please enter a valid email address",
+			"inUse": "Email is already in use"
+		},
+		"username": {
+			"required": "Username is required"
+		},
+		"password": {
+			"required": "Password is required",
+			"length": "Please enter a password with 6 or more characters",
+			"invalid": "Password must contain at least one uppercase, one lowercase, one number and one special character"
+		}
+	}
+}

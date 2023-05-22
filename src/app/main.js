@@ -6,9 +6,9 @@ app.listen(3000, async () => {
 	dotenv.config({ debug: process.env.DEBUG });
 
 	try {
-		await sequelize.sync({ force: true });
+		await sequelize.sync({ alter: true });
 		console.log("Database connected succesfully");
 	} catch (err) {
-		console.error("Unable to connect to the database:", error);
+		console.error("Unable to connect to the database:", err);
 	}
 });
