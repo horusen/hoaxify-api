@@ -35,6 +35,13 @@ jest.mock("./user.model", () => {
 		return Promise.resolve({ count: mockUsers.length, rows: users });
 	});
 
+	const mockFindOne = jest.fn((options) => {
+		const user = mockUsers.find((user) => user.id == options.where.id);
+		if (!user) return Promise.resolve(null);
+
+		return Promise.resolve(user);
+	});
+
 	const mockSequelize = {
 		transaction: jest.fn(() => {
 			return {
@@ -48,6 +55,7 @@ jest.mock("./user.model", () => {
 		create: mockCreate,
 		findAll: mockFindAll,
 		findAndCountAll: mockFindAndCountAll,
+		findOne: mockFindOne,
 		sequelize: mockSequelize,
 	};
 });
@@ -64,6 +72,16 @@ jest.mock("../utils/email-service", () => {
 });
 
 describe("User service", () => {
+	const createUsers = async (active, inactive = 0) => {
+		for (let i = 0; i < active + inactive; i++) {
+			await User.create({
+				username: `user${i + 1}`,
+				email: `user${i + 1}@gmail.com`,
+				password: "Password",
+				active: i < active,
+			});
+		}
+	};
 	beforeEach(() => {
 		mockUsers = [];
 	});
@@ -133,21 +151,9 @@ describe("User service", () => {
 			where: { active: true },
 		};
 		beforeEach(() => {
-			mockUsers = [];
 			mockPerPage = 10;
 			mockPage = 1;
 		});
-
-		createUsers = async (active, inactive = 0) => {
-			for (let i = 0; i < active + inactive; i++) {
-				await User.create({
-					username: `user${i + 1}`,
-					email: `user${i + 1}@gmail.com`,
-					password: "Password",
-					active: i < active,
-				});
-			}
-		};
 
 		it("Should return only active users", async () => {
 			await createUsers(1, 1);
@@ -189,6 +195,21 @@ describe("User service", () => {
 			const result = await userService.findAll(5, 1);
 			expect(User.findAndCountAll).toHaveBeenCalledWith(expect.objectContaining({ offset: 0, limit: 5 }));
 			expect(result.data.length).toBe(5);
+		});
+	});
+
+	describe("Get user by id", () => {
+		it("Should return the user with the given id", async () => {
+			await createUsers(1);
+			const result = await userService.findById(1);
+			expect(result).toMatchObject(expect.objectContaining({ ...mockUsers[0], id: 1 }));
+		});
+
+		it("Should throw an error if the user does not exist", async () => {
+			await userService.findById(1).catch((error) => {
+				expect(error).toBeDefined();
+				expect(error.message).toBe("User not found");
+			});
 		});
 	});
 });

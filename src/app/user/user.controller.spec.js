@@ -8,6 +8,17 @@ const sequelize = require("../../loader/database");
 const API_ENDPOINT = `/api/v1/users`;
 const apiCall = () => request(app).get(API_ENDPOINT);
 
+const createUsers = async (active, inactive) => {
+	for (let i = 0; i < active + inactive; i++) {
+		await User.create({
+			username: `user${i + 1}`,
+			email: `user${i + 1}@email.com`,
+			password: "password",
+			active: i < active,
+		});
+	}
+};
+
 describe("User controller", () => {
 	beforeAll(async () => {
 		await sequelize.sync();
@@ -19,17 +30,6 @@ describe("User controller", () => {
 
 	describe("GET /users", () => {
 		let response;
-
-		const createUsers = async (active, inactive) => {
-			for (let i = 0; i < active + inactive; i++) {
-				await User.create({
-					username: `user${i + 1}`,
-					email: `user${i + 1}@email.com`,
-					password: "password",
-					active: i < active,
-				});
-			}
-		};
 
 		beforeAll(async () => {});
 
@@ -103,6 +103,54 @@ describe("User controller", () => {
 			await createUsers(12, 0);
 			response = await apiCall().query({ pageSize: "any" });
 			expect(response.body.data.length).toBe(10);
+		});
+	});
+
+	describe("GET /users/:id", () => {
+		it("Should return a user with a 200 status code", async () => {
+			await createUsers(1, 0);
+			const user = await User.findOne();
+			const response = await request(app).get(`${API_ENDPOINT}/${user.id}`);
+			expect(response.status).toBe(200);
+			expect(response.body.message).toBe("User fetched succesfully");
+			expect(response.body.data).toBeDefined();
+			expect(response.body.data.id).toBe(user.id);
+		});
+
+		it("Should return a 404 status code if the user does not exist", async () => {
+			await createUsers(1, 0);
+			const response = await request(app).get(`${API_ENDPOINT}/2098`);
+			expect(response.status).toBe(404);
+			expect(response.body.message).toBe("User not found");
+		});
+
+		it("Should not return a password, activation token properties", async () => {
+			await createUsers(1, 0);
+			const user = await User.findOne();
+			const response = await request(app).get(`${API_ENDPOINT}/${user.id}`);
+			expect(response.body.data.password).toBeUndefined();
+			expect(response.body.data.activationToken).toBeUndefined();
+		});
+
+		it("Should return a 422 status code if the id is not a number", async () => {
+			await createUsers(1, 0);
+			const response = await request(app).get(`${API_ENDPOINT}/any`);
+			expect(response.status).toBe(422);
+			expect(response.body.message).toBe("Invalid id");
+		});
+
+		it("Should return a 422 status code if the id is less than 1", async () => {
+			await createUsers(1, 0);
+			const response = await request(app).get(`${API_ENDPOINT}/0`);
+			expect(response.status).toBe(422);
+			expect(response.body.message).toBe("Invalid id");
+		});
+
+		it("Should return 404 status code if the user is inactive", async () => {
+			await createUsers(0, 1);
+			const user = await User.findOne();
+			const response = await request(app).get(`${API_ENDPOINT}/${user.id}`);
+			expect(response.status).toBe(404);
 		});
 	});
 });

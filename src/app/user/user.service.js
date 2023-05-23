@@ -54,6 +54,16 @@ const getUserByEmail = async (email) => {
 	return await User.findOne({ where: { email } });
 };
 
+const findById = async (id) => {
+	const user = await User.findOne({ where: { id, active: true }, attributes: { exclude: ["password", "activationToken", "active"] } });
+
+	if (!user) {
+		throw new HttpError("User not found", 404);
+	}
+
+	return user;
+};
+
 const findAll = async (pageSize = null, page = null) => {
 	pageSize = parseInt(pageSize) || PER_PAGE;
 	page = parseInt(page) || PAGE;
@@ -87,4 +97,5 @@ module.exports = {
 	getUserByEmail,
 	activate,
 	findAll,
+	findById,
 };

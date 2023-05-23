@@ -2,6 +2,7 @@
 // It is used in the main app.js file.
 module.exports = function (err, req, res, next) {
 	if (Object.keys(err).length === 0) {
+		console.log(err);
 		err = { message: "Internal server error", code: 500 };
 	}
 
