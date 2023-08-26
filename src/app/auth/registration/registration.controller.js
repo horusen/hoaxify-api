@@ -3,11 +3,13 @@ const registrationDto = require("./dtos/registration.dto");
 const { getValidationErrors, translate } = require("../../utils/utils");
 const HttpError = require("../../utils/httpError");
 const use = require("../../utils/errorWrapper");
+const loginController = require("../login/login.controller");
 
 const router = require("express").Router();
 
 router.post("/registration", registrationDto(), use(registerUser));
 router.get("/activation/:token", use(activateUser));
+router.use("/login", loginController);
 
 async function registerUser(req, res) {
 	const errors = getValidationErrors(req);
